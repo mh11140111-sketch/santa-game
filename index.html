@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="theme-color" content="#07131b" />
+<title>SANTA: INFINITE NIGHT</title>
+<style>
+html,body{margin:0;width:100%;height:100%;min-height:100%;overflow:hidden;background:#07131b;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#fff}
+*{box-sizing:border-box}
+#wrap{position:fixed;inset:0;width:100%;height:100dvh;min-height:100svh;touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;background:
+radial-gradient(circle at 50% 20%,rgba(95,175,255,.15),transparent 32%),
+linear-gradient(#07131b 0%,#0b2530 55%,#173623 56%,#0d2117 100%)}
+canvas{display:block;width:100%;height:100%}
+#hud{position:absolute;left:calc(10px + env(safe-area-inset-left));right:calc(10px + env(safe-area-inset-right));top:calc(10px + env(safe-area-inset-top));display:flex;gap:8px;pointer-events:none}
+.card{background:rgba(3,10,15,.72);border:1px solid rgba(255,255,255,.13);backdrop-filter:blur(8px);border-radius:14px;padding:8px 11px;box-shadow:0 8px 26px rgba(0,0,0,.25)}
+#stats{min-width:180px}
+.bar{width:170px;height:10px;background:#35151a;border-radius:99px;overflow:hidden;margin-top:5px}
+#hp{height:100%;width:100%;background:linear-gradient(90deg,#ff3150,#ff9d55)}
+#event{margin-left:auto;max-width:46vw;text-align:right;font-weight:800}
+#title{font-size:11px;letter-spacing:2px;color:#94acb9}
+#score{font-size:18px;font-weight:900}
+#controls{position:absolute;left:0;right:0;bottom:0;height:calc(170px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);pointer-events:none}
+#joy{position:absolute;left:calc(18px + env(safe-area-inset-left));bottom:calc(18px + env(safe-area-inset-bottom));width:125px;height:125px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);pointer-events:auto}
+#nub{position:absolute;left:37.5px;top:37.5px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.28);box-shadow:0 0 22px rgba(255,255,255,.1)}
+#gift{position:absolute;right:calc(20px + env(safe-area-inset-right));bottom:calc(28px + env(safe-area-inset-bottom));width:112px;height:112px;border:none;border-radius:50%;color:white;font-size:42px;background:radial-gradient(circle at 35% 30%,#ff6a74,#d4142d 62%,#8f071a);box-shadow:0 10px 35px rgba(255,30,65,.35),inset 0 0 0 5px rgba(255,255,255,.08);pointer-events:auto}
+#gift:active{transform:scale(.95)}
+#cool{position:absolute;right:calc(30px + env(safe-area-inset-right));bottom:calc(7px + env(safe-area-inset-bottom));width:92px;text-align:center;font-size:12px;font-weight:800;color:#d7e7ef}
+#start{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,6,10,.68);z-index:5}
+.panel{width:min(92vw,480px);padding:26px;border-radius:24px;background:linear-gradient(180deg,rgba(17,37,48,.96),rgba(5,17,24,.96));border:1px solid rgba(255,255,255,.15);box-shadow:0 24px 80px rgba(0,0,0,.45)}
+.panel h1{margin:0 0 5px;font-size:32px}
+.panel p{color:#bdd0da;line-height:1.55}
+.panel button{width:100%;height:54px;border:0;border-radius:15px;font-size:18px;font-weight:900;color:#fff;background:linear-gradient(90deg,#e11934,#ff5f4a)}
+.badges{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:15px 0 20px}
+.badge{padding:10px;border-radius:12px;background:rgba(255,255,255,.06);font-size:13px}
+#tip{position:absolute;left:50%;bottom:calc(8px + env(safe-area-inset-bottom));transform:translateX(-50%);font-size:12px;color:#b7c8d0;pointer-events:none;white-space:nowrap}
+@media(min-width:800px){#controls{height:190px}#joy{width:145px;height:145px}#nub{left:47.5px;top:47.5px}}
+
+@media(max-width:600px) and (orientation:portrait){
+  #hud{gap:6px}
+  .card{padding:7px 9px;border-radius:12px}
+  #stats{min-width:150px}
+  .bar{width:140px}
+  #event{font-size:12px;max-width:42vw}
+  #score{font-size:16px}
+  #title{font-size:9px}
+  #joy{width:118px;height:118px}
+  #nub{left:36px;top:36px;width:46px;height:46px}
+  #gift{width:104px;height:104px;font-size:38px}
+  #tip{display:none}
+}
+@media(max-height:500px) and (orientation:landscape){
+  #controls{height:135px}
+  #joy{width:102px;height:102px;bottom:10px}
+  #nub{left:31px;top:31px;width:40px;height:40px}
+  #gift{width:92px;height:92px;font-size:34px;bottom:14px}
+  #cool{font-size:11px}
+  #tip{display:none}
+}
+
+</style>
+</head>
+<body>
+<div id="wrap">
+<canvas id="c"></canvas>
+<div id="hud">
+  <div id="stats" class="card"><div id="title">SANTA · INFINITE NIGHT</div><div id="score">처치 0 · WAVE 1</div><div class="bar"><div id="hp"></div></div></div>
+  <div id="event" class="card">🎁 선물 준비 완료</div>
+</div>
+<div id="controls">
+  <div id="joy"><div id="nub"></div></div>
+  <button id="gift">🎁</button>
+  <div id="cool">랜덤 선물 공격</div>
+</div>
+<div id="tip">왼쪽 조이스틱 이동 · 오른쪽 선물 버튼 공격</div>
+<div id="start" style="display:none">
+ <div class="panel">
+  <h1>🎅 SANTA: INFINITE NIGHT</h1>
+  <p>끝없이 몰려오는 적을 막아라. 산타의 선물상자는 열릴 때마다 전혀 다른 공격을 꺼낸다.</p>
+  <div class="badges">
+   <div class="badge">💥 폭발 선물<br>광역 폭발</div>
+   <div class="badge">🧒 아이 소환<br>함께 자동 전투</div>
+   <div class="badge">🌧️ 총알비<br>화면 전체 난사</div>
+   <div class="badge">👊 근접 난타<br>주변 적 강타</div>
+   <div class="badge">❄️ 눈보라<br>전체 둔화 + 피해</div>
+   <div class="badge">🦌 순록 돌진<br>직선 관통 공격</div>
+   <div class="badge">🛡️ 보호막<br>8초 무적</div>
+   <div class="badge">🧝 엘프 지원<br>고속 지원사격</div>
+  </div>
+  <button id="play">게임 시작</button>
+ </div>
+</div>
+</div>
+<script>
+const c=document.getElementById('c'),x=c.getContext('2d');
+let W=innerWidth,H=innerHeight,DPR=Math.min(devicePixelRatio||1,2);
+function resize(){
+  W=window.visualViewport ? visualViewport.width : innerWidth;
+  H=window.visualViewport ? visualViewport.height : innerHeight;
+  c.width=Math.max(1,Math.floor(W*DPR));
+  c.height=Math.max(1,Math.floor(H*DPR));
+  c.style.width=W+'px';
+  c.style.height=H+'px';
+  x.setTransform(DPR,0,0,DPR,0,0);
+}
+addEventListener('resize',resize);
+if(window.visualViewport){
+  visualViewport.addEventListener('resize',resize);
+}
+document.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
+document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
+resize();
+
+let running=false,t=0,kill=0,wave=1,lastSpawn=0,lastAuto=0,lastGift=-999,hp=100;
+const santa={x:W/2,y:H*.62,r:24,speed:245};
+function clampSanta(){
+  santa.x=Math.max(28,Math.min(W-28,santa.x));
+  santa.y=Math.max(70,Math.min(H-40,santa.y));
+}
+addEventListener('resize',()=>requestAnimationFrame(clampSanta));
+if(window.visualViewport){
+  visualViewport.addEventListener('resize',()=>requestAnimationFrame(clampSanta));
+}
+let enemies=[],bullets=[],fx=[],kids=[],snow=[],mines=[];
+let shield=0;
+for(let i=0;i<90;i++)snow.push({x:Math.random()*W,y:Math.random()*H,s:1+Math.random()*2,v:20+Math.random()*35});
+
+function rand(a,b){return a+Math.random()*(b-a)}
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function spawn(){
+ let side=Math.floor(Math.random()*4),e={x:0,y:0,r:15+Math.random()*8,hp:28+wave*3,spd:38+Math.random()*30+wave*1.6};
+ if(side===0){e.x=rand(0,W);e.y=-30}
+ if(side===1){e.x=W+30;e.y=rand(40,H-100)}
+ if(side===2){e.x=rand(0,W);e.y=H+30}
+ if(side===3){e.x=-30;e.y=rand(40,H-100)}
+ enemies.push(e)
+}
+function nearest(from){
+ let best=null,bd=1e9;
+ for(const e of enemies){let d=dist(from,e);if(d<bd){bd=d;best=e}}
+ return best
+}
+function shoot(from,target,dmg=14,speed=430,kind='star'){
+ if(!target)return;
+ let a=Math.atan2(target.y-from.y,target.x-from.x);
+ bullets.push({x:from.x,y:from.y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,r:5,dmg,life:2,kind});
+}
+function burst(px,py,n=14){for(let i=0;i<n;i++){let a=Math.random()*Math.PI*2,s=rand(40,180);fx.push({x:px,y:py,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rand(.3,.8),max:1})}}
+function useGift(){
+ if(!running||t-lastGift<1.7)return;
+ lastGift=t;
+ let r=Math.floor(Math.random()*10);
+
+ if(r===0){
+   document.getElementById('event').textContent='💥 폭발 선물!';
+   let target=nearest(santa); let px=target?target.x:santa.x,py=target?target.y:santa.y-120;
+   fx.push({ring:true,x:px,y:py,life:.7,max:.7});
+   for(const e of enemies)if(Math.hypot(e.x-px,e.y-py)<150)e.hp-=65;
+   burst(px,py,30);
+
+ }else if(r===1){
+   document.getElementById('event').textContent='🧒 아이 동료 소환!';
+   let ang=Math.random()*Math.PI*2;
+   kids.push({x:santa.x+Math.cos(ang)*45,y:santa.y+Math.sin(ang)*45,life:14,last:0,ang,type:'kid'});
+
+ }else if(r===2){
+   document.getElementById('event').textContent='🌧️ 총알비!';
+   for(let i=0;i<36;i++)bullets.push({x:rand(0,W),y:-20-rand(0,180),vx:rand(-25,25),vy:rand(420,620),r:4,dmg:28,life:2.5,kind:'rain'});
+
+ }else if(r===3){
+   document.getElementById('event').textContent='👊 산타 근접 난타!';
+   fx.push({ring:true,x:santa.x,y:santa.y,life:.45,max:.45});
+   for(const e of enemies)if(dist(santa,e)<125){e.hp-=85;let a=Math.atan2(e.y-santa.y,e.x-santa.x);e.x+=Math.cos(a)*55;e.y+=Math.sin(a)*55}
+   burst(santa.x,santa.y,24);
+
+ }else if(r===4){
+   document.getElementById('event').textContent='❄️ 눈보라!';
+   fx.push({ring:true,x:santa.x,y:santa.y,life:1,max:1});
+   for(const e of enemies){e.hp-=35;e.spd*=0.45}
+   for(let i=0;i<50;i++)fx.push({x:rand(0,W),y:rand(0,H),vx:rand(-30,30),vy:rand(20,80),life:rand(.5,1.2),max:1});
+
+ }else if(r===5){
+   document.getElementById('event').textContent='🦌 순록 돌진!';
+   let target=nearest(santa),a=target?Math.atan2(target.y-santa.y,target.x-santa.x):-Math.PI/2;
+   for(let d=40;d<360;d+=45){
+     let px=santa.x+Math.cos(a)*d,py=santa.y+Math.sin(a)*d;
+     fx.push({ring:true,x:px,y:py,life:.35,max:.35});
+     for(const e of enemies)if(Math.hypot(e.x-px,e.y-py)<55)e.hp-=45;
+   }
+
+ }else if(r===6){
+   document.getElementById('event').textContent='🎁💣 거대 선물폭탄!';
+   let px=W/2,py=H*.45;
+   fx.push({ring:true,x:px,y:py,life:1.0,max:1.0});
+   for(const e of enemies)e.hp-=110;
+   burst(px,py,60);
+
+ }else if(r===7){
+   document.getElementById('event').textContent='🛡️ 크리스마스 보호막!';
+   shield=Math.max(shield,8);
+   fx.push({ring:true,x:santa.x,y:santa.y,life:.8,max:.8});
+
+ }else if(r===8){
+   document.getElementById('event').textContent='🍬 사탕 지뢰!';
+   for(let i=0;i<6;i++){
+     let a=Math.random()*Math.PI*2,d=rand(70,170);
+     mines.push({x:santa.x+Math.cos(a)*d,y:santa.y+Math.sin(a)*d,r:13,life:12});
+   }
+
+ }else{
+   document.getElementById('event').textContent='🧝 엘프 지원사격!';
+   for(let i=0;i<2;i++){
+     let ang=Math.random()*Math.PI*2;
+     kids.push({x:santa.x+Math.cos(ang)*70,y:santa.y+Math.sin(ang)*70,life:16,last:0,ang,type:'elf'});
+   }
+ }
+}
+const giftBtn=document.getElementById('gift');
+giftBtn.addEventListener('pointerdown',e=>{e.preventDefault();useGift()});
+giftBtn.addEventListener('touchstart',e=>{e.preventDefault();useGift()},{passive:false});
+document.getElementById('play').onclick=()=>{document.getElementById('start').style.display='none';reset();running=true};
+reset();running=true;
+
+function reset(){t=0;kill=0;wave=1;hp=100;shield=0;enemies=[];bullets=[];fx=[];kids=[];mines=[];santa.x=W/2;santa.y=H*.62;lastGift=-999;lastSpawn=0;lastAuto=0}
+
+let joy={active:false,id:null,dx:0,dy:0}, joyEl=document.getElementById('joy'),nub=document.getElementById('nub');
+function joyMove(e){
+ const r=joyEl.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+ let dx=e.clientX-cx,dy=e.clientY-cy,d=Math.hypot(dx,dy),m=r.width*.34;
+ if(d>m){dx*=m/d;dy*=m/d}
+ joy.dx=dx/m;joy.dy=dy/m;
+ nub.style.transform=`translate(${dx}px,${dy}px)`;
+}
+joyEl.addEventListener('pointerdown',e=>{joy.active=true;joy.id=e.pointerId;joyEl.setPointerCapture(e.pointerId);joyMove(e)});
+joyEl.addEventListener('pointermove',e=>{if(joy.active&&e.pointerId===joy.id)joyMove(e)});
+function joyEnd(e){if(e.pointerId===joy.id){joy.active=false;joy.dx=joy.dy=0;nub.style.transform='translate(0,0)'}}
+joyEl.addEventListener('pointerup',joyEnd);joyEl.addEventListener('pointercancel',joyEnd);
+
+joyEl.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  const q=e.changedTouches[0];
+  joy.active=true; joy.id='touch';
+  joyMove({clientX:q.clientX,clientY:q.clientY});
+},{passive:false});
+joyEl.addEventListener('touchmove',e=>{
+  if(!joy.active)return;
+  e.preventDefault();
+  const q=e.changedTouches[0];
+  joyMove({clientX:q.clientX,clientY:q.clientY});
+},{passive:false});
+joyEl.addEventListener('touchend',e=>{
+  e.preventDefault();
+  joy.active=false;joy.dx=joy.dy=0;nub.style.transform='translate(0,0)';
+},{passive:false});
+
+const keys={};
+addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)){
+    e.preventDefault();
+  }
+  keys[k]=true;
+  if(e.code==='Space') useGift();
+},{passive:false});
+addEventListener('keyup',e=>{
+  keys[e.key.toLowerCase()]=false;
+},{passive:false});
+
+function update(dt){
+ t+=dt;wave=1+Math.floor(kill/18);
+ if(shield>0)shield-=dt;
+ let spawnGap=Math.max(.18,.82-wave*.035);
+ if(t-lastSpawn>spawnGap){lastSpawn=t;for(let i=0;i<Math.min(1+Math.floor(wave/8),4);i++)spawn()}
+ let mx=joy.dx+(keys['d']||keys['arrowright']?1:0)-(keys['a']||keys['arrowleft']?1:0),
+     my=joy.dy+(keys['s']||keys['arrowdown']?1:0)-(keys['w']||keys['arrowup']?1:0);
+ let l=Math.hypot(mx,my);if(l>1){mx/=l;my/=l}
+ santa.x=Math.max(28,Math.min(W-28,santa.x+mx*santa.speed*dt));
+ santa.y=Math.max(70,Math.min(H-40,santa.y+my*santa.speed*dt));
+ if(t-lastAuto>.42){lastAuto=t;shoot(santa,nearest(santa),13+wave*.4,480)}
+ for(const k of kids){
+   k.life-=dt;k.ang+=dt*.8;
+   k.x+=(santa.x+Math.cos(k.ang)*62-k.x)*dt*3;k.y+=(santa.y+Math.sin(k.ang)*62-k.y)*dt*3;
+   let rate=(k.type==='elf') ? 0.28 : 0.55;
+   if(t-k.last>rate){k.last=t;shoot(k,nearest(k),k.type==='elf'?13:18,k.type==='elf'?520:440,k.type==='elf'?'elf':'kid')}
+ }
+ kids=kids.filter(k=>k.life>0);
+ for(const e of enemies){
+   let a=Math.atan2(santa.y-e.y,santa.x-e.x);e.x+=Math.cos(a)*e.spd*dt;e.y+=Math.sin(a)*e.spd*dt;
+   if(dist(santa,e)<santa.r+e.r){if(shield<=0)hp-=18*dt;e.x-=Math.cos(a)*25*dt;e.y-=Math.sin(a)*25*dt}
+ }
+ for(const b of bullets){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
+   for(const e of enemies)if(e.hp>0&&Math.hypot(b.x-e.x,b.y-e.y)<b.r+e.r){e.hp-=b.dmg;b.life=0;burst(b.x,b.y,4);break}
+ }
+ bullets=bullets.filter(b=>b.life>0&&b.x>-40&&b.x<W+40&&b.y>-250&&b.y<H+50);
+ for(const m of mines){
+   m.life-=dt;
+   for(const e of enemies){
+     if(e.hp>0&&Math.hypot(e.x-m.x,e.y-m.y)<m.r+e.r){
+       e.hp-=90;m.life=0;fx.push({ring:true,x:m.x,y:m.y,life:.55,max:.55});burst(m.x,m.y,18);
+       for(const e2 of enemies)if(Math.hypot(e2.x-m.x,e2.y-m.y)<85)e2.hp-=35;
+       break;
+     }
+   }
+ }
+ mines=mines.filter(m=>m.life>0);
+
+ let before=enemies.length;
+ enemies=enemies.filter(e=>{if(e.hp<=0){kill++;burst(e.x,e.y,12);return false}return e.x>-80&&e.x<W+80&&e.y>-80&&e.y<H+80});
+ for(const f of fx){f.life-=dt;if(!f.ring){f.x+=f.vx*dt;f.y+=f.vy*dt;f.vx*=.96;f.vy*=.96}}
+ fx=fx.filter(f=>f.life>0);
+ for(const s of snow){s.y+=s.v*dt;if(s.y>H){s.y=-4;s.x=Math.random()*W}}
+ document.getElementById('score').textContent=`처치 ${kill} · WAVE ${wave}`;
+ document.getElementById('hp').style.width=Math.max(0,hp)+'%';
+ let rem=Math.max(0,1.7-(t-lastGift));
+ document.getElementById('cool').textContent=rem?`재사용 ${rem.toFixed(1)}초`:'랜덤 선물 공격';
+ if(hp<=0){running=false;document.querySelector('.panel h1').textContent='🎄 크리스마스는 여기까지!';document.querySelector('.panel p').textContent=`처치 ${kill}명 · WAVE ${wave}까지 버텼다. 다시 도전해서 기록을 깨봐.`;document.getElementById('play').textContent='다시 시작';document.getElementById('start').style.display='flex'}
+}
+function circle(px,py,r,fill){x.beginPath();x.arc(px,py,r,0,Math.PI*2);x.fillStyle=fill;x.fill()}
+function draw(){
+ x.clearRect(0,0,W,H);
+ for(const s of snow){x.globalAlpha=.65;circle(s.x,s.y,s.s,'#fff')}x.globalAlpha=1;
+ // distant trees
+ for(let tx=20;tx<W;tx+=80){x.fillStyle='rgba(3,18,15,.55)';x.beginPath();x.moveTo(tx,H*.56);x.lineTo(tx+25,H*.43);x.lineTo(tx+50,H*.56);x.fill()}
+ // kids
+ for(const k of kids){circle(k.x,k.y,15,k.type==='elf'?'#57e389':'#55c7ff');x.font='20px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(k.type==='elf'?'🧝':'🧒',k.x,k.y)}
+ for(const m of mines){circle(m.x,m.y,m.r,'#d83b5c');x.font='18px sans-serif';x.fillText('🍬',m.x,m.y)}
+ // santa
+ x.save();
+ x.globalAlpha=1;
+ if(shield>0){x.strokeStyle='rgba(120,220,255,.9)';x.lineWidth=5;x.beginPath();x.arc(santa.x,santa.y,santa.r+13,0,Math.PI*2);x.stroke()}
+ x.globalAlpha=1;x.font='44px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🎅',santa.x,santa.y);x.restore();
+ // enemies
+ for(const e of enemies){circle(e.x,e.y,e.r,'#4b151c');x.font=(e.r*1.55)+'px sans-serif';x.fillText('👹',e.x,e.y)}
+ for(const b of bullets){
+   if(b.kind==='rain'){x.fillStyle='#ffe55f';x.fillRect(b.x-2,b.y-9,4,18)}
+   else {circle(b.x,b.y,b.r,b.kind==='kid'?'#63d7ff':b.kind==='elf'?'#67f0a3':'#ffd84f')}
+ }
+ for(const f of fx){
+   let a=Math.max(0,f.life/(f.max||1));x.globalAlpha=Math.min(1,a);
+   if(f.ring){x.strokeStyle='#ffdf61';x.lineWidth=7;x.beginPath();x.arc(f.x,f.y,(1-a)*155+20,0,Math.PI*2);x.stroke()}
+   else circle(f.x,f.y,3,'#ffcf4c')
+ }x.globalAlpha=1;
+}
+let prev=performance.now();
+function loop(now){let dt=Math.min(.033,(now-prev)/1000);prev=now;if(running)update(dt);draw();requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
