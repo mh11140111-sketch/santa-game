@@ -76,10 +76,10 @@ canvas{display:block;width:100%;height:100%}
   <div id="cool">랜덤 선물 공격</div>
 </div>
 <div id="tip">왼쪽 조이스틱 이동 · 오른쪽 선물 버튼 공격</div>
-<div id="start" style="display:none">
+<div id="start">
  <div class="panel">
   <h1>🎅 SANTA: INFINITE NIGHT</h1>
-  <p>끝없이 몰려오는 적을 막아라. 산타의 선물상자는 열릴 때마다 전혀 다른 공격을 꺼낸다.</p>
+  <p>끝없이 몰려오는 적을 막아라. 웨이브가 오를수록 적이 더 많이 몰려오고, 10웨이브마다 점점 강해지는 보스가 등장한다.</p>
   <div class="badges">
    <div class="badge">💥 폭발 선물<br>광역 폭발</div>
    <div class="badge">🧒 아이 소환<br>함께 자동 전투</div>
@@ -89,6 +89,8 @@ canvas{display:block;width:100%;height:100%}
    <div class="badge">🦌 순록 돌진<br>직선 관통 공격</div>
    <div class="badge">🛡️ 보호막<br>8초 무적</div>
    <div class="badge">🧝 엘프 지원<br>고속 지원사격</div>
+   <div class="badge">🌊 웨이브 강화<br>점점 많은 적 등장</div>
+   <div class="badge">👑 보스전<br>10웨이브마다 등장</div>
   </div>
   <button id="play">게임 시작</button>
  </div>
@@ -115,7 +117,7 @@ document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
 document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
 resize();
 
-let running=false,t=0,kill=0,wave=1,lastSpawn=0,lastAuto=0,lastGift=-999,hp=100;
+let running=false,t=0,kill=0,wave=1,lastSpawn=0,lastAuto=0,lastGift=-999,hp=100,lastBossWave=0,bossCount=0;
 const santa={x:W/2,y:H*.62,r:24,speed:245};
 function clampSanta(){
   santa.x=Math.max(28,Math.min(W-28,santa.x));
@@ -132,12 +134,25 @@ for(let i=0;i<90;i++)snow.push({x:Math.random()*W,y:Math.random()*H,s:1+Math.ran
 function rand(a,b){return a+Math.random()*(b-a)}
 function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
 function spawn(){
- let side=Math.floor(Math.random()*4),e={x:0,y:0,r:15+Math.random()*8,hp:28+wave*3,spd:38+Math.random()*30+wave*1.6};
+ let side=Math.floor(Math.random()*4),baseHp=28+wave*3,e={x:0,y:0,r:15+Math.random()*8,hp:baseHp,maxHp:baseHp,spd:38+Math.random()*30+wave*1.6,damage:18,boss:false};
  if(side===0){e.x=rand(0,W);e.y=-30}
  if(side===1){e.x=W+30;e.y=rand(40,H-100)}
  if(side===2){e.x=rand(0,W);e.y=H+30}
  if(side===3){e.x=-30;e.y=rand(40,H-100)}
  enemies.push(e)
+}
+function spawnBoss(level){
+ let side=Math.floor(Math.random()*4);
+ let scale=1+(level-1)*0.28;
+ let maxHp=Math.round(650*scale);
+ let e={x:0,y:0,r:42+Math.min(10,(level-1)*2),hp:maxHp,maxHp:maxHp,spd:34+(level-1)*3,damage:30+(level-1)*4,boss:true,bossLevel:level};
+ if(side===0){e.x=rand(50,W-50);e.y=-60}
+ if(side===1){e.x=W+60;e.y=rand(90,H-130)}
+ if(side===2){e.x=rand(50,W-50);e.y=H+60}
+ if(side===3){e.x=-60;e.y=rand(90,H-130)}
+ enemies.push(e);
+ document.getElementById('event').textContent=`👑 BOSS ${level} 등장!`;
+ fx.push({ring:true,x:W/2,y:H*.42,life:1.1,max:1.1});
 }
 function nearest(from){
  let best=null,bd=1e9;
@@ -222,10 +237,16 @@ function useGift(){
 const giftBtn=document.getElementById('gift');
 giftBtn.addEventListener('pointerdown',e=>{e.preventDefault();useGift()});
 giftBtn.addEventListener('touchstart',e=>{e.preventDefault();useGift()},{passive:false});
-document.getElementById('play').onclick=()=>{document.getElementById('start').style.display='none';reset();running=true};
-reset();running=true;
+document.getElementById('play').onclick=()=>{
+ document.getElementById('start').style.display='none';
+ document.querySelector('.panel h1').textContent='🎅 SANTA: INFINITE NIGHT';
+ document.querySelector('.panel p').textContent='끝없이 몰려오는 적을 막아라. 웨이브가 오를수록 적이 더 많이 몰려오고, 10웨이브마다 점점 강해지는 보스가 등장한다.';
+ document.getElementById('play').textContent='게임 시작';
+ reset();running=true
+};
+reset();running=false;
 
-function reset(){t=0;kill=0;wave=1;hp=100;shield=0;enemies=[];bullets=[];fx=[];kids=[];mines=[];santa.x=W/2;santa.y=H*.62;lastGift=-999;lastSpawn=0;lastAuto=0}
+function reset(){t=0;kill=0;wave=1;hp=100;shield=0;lastBossWave=0;bossCount=0;enemies=[];bullets=[];fx=[];kids=[];mines=[];santa.x=W/2;santa.y=H*.62;lastGift=-999;lastSpawn=0;lastAuto=0;document.getElementById('score').textContent='처치 0 · WAVE 1';document.getElementById('hp').style.width='100%';document.getElementById('event').textContent='🎁 선물 준비 완료'}
 
 let joy={active:false,id:null,dx:0,dy:0}, joyEl=document.getElementById('joy'),nub=document.getElementById('nub');
 function joyMove(e){
@@ -271,10 +292,22 @@ addEventListener('keyup',e=>{
 },{passive:false});
 
 function update(dt){
- t+=dt;wave=1+Math.floor(kill/18);
+ t+=dt;
+ wave=1+Math.floor(kill/18);
  if(shield>0)shield-=dt;
- let spawnGap=Math.max(.18,.82-wave*.035);
- if(t-lastSpawn>spawnGap){lastSpawn=t;for(let i=0;i<Math.min(1+Math.floor(wave/8),4);i++)spawn()}
+
+ if(wave%10===0 && lastBossWave!==wave){
+   lastBossWave=wave;
+   bossCount++;
+   spawnBoss(bossCount);
+ }
+
+ let spawnGap=Math.max(.16,.86-wave*.04);
+ let spawnBatch=Math.min(1+Math.floor((wave-1)/3),7);
+ if(t-lastSpawn>spawnGap){
+   lastSpawn=t;
+   for(let i=0;i<spawnBatch;i++)spawn();
+ }
  let mx=joy.dx+(keys['d']||keys['arrowright']?1:0)-(keys['a']||keys['arrowleft']?1:0),
      my=joy.dy+(keys['s']||keys['arrowdown']?1:0)-(keys['w']||keys['arrowup']?1:0);
  let l=Math.hypot(mx,my);if(l>1){mx/=l;my/=l}
@@ -290,7 +323,7 @@ function update(dt){
  kids=kids.filter(k=>k.life>0);
  for(const e of enemies){
    let a=Math.atan2(santa.y-e.y,santa.x-e.x);e.x+=Math.cos(a)*e.spd*dt;e.y+=Math.sin(a)*e.spd*dt;
-   if(dist(santa,e)<santa.r+e.r){if(shield<=0)hp-=18*dt;e.x-=Math.cos(a)*25*dt;e.y-=Math.sin(a)*25*dt}
+   if(dist(santa,e)<santa.r+e.r){if(shield<=0)hp-=(e.damage||18)*dt;e.x-=Math.cos(a)*(e.boss?10:25)*dt;e.y-=Math.sin(a)*(e.boss?10:25)*dt}
  }
  for(const b of bullets){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
    for(const e of enemies)if(e.hp>0&&Math.hypot(b.x-e.x,b.y-e.y)<b.r+e.r){e.hp-=b.dmg;b.life=0;burst(b.x,b.y,4);break}
@@ -307,8 +340,9 @@ function update(dt){
    }
  }
  mines=mines.filter(m=>m.life>0);
+
  let before=enemies.length;
- enemies=enemies.filter(e=>{if(e.hp<=0){kill++;burst(e.x,e.y,12);return false}return e.x>-80&&e.x<W+80&&e.y>-80&&e.y<H+80});
+ enemies=enemies.filter(e=>{if(e.hp<=0){kill+=e.boss?5:1;burst(e.x,e.y,e.boss?40:12);if(e.boss)document.getElementById('event').textContent='🏆 보스 격파!';return false}return e.x>-90&&e.x<W+90&&e.y>-90&&e.y<H+90});
  for(const f of fx){f.life-=dt;if(!f.ring){f.x+=f.vx*dt;f.y+=f.vy*dt;f.vx*=.96;f.vy*=.96}}
  fx=fx.filter(f=>f.life>0);
  for(const s of snow){s.y+=s.v*dt;if(s.y>H){s.y=-4;s.x=Math.random()*W}}
@@ -332,12 +366,22 @@ function draw(){
  x.globalAlpha=1;
  if(shield>0){x.strokeStyle='rgba(120,220,255,.9)';x.lineWidth=5;x.beginPath();x.arc(santa.x,santa.y,santa.r+13,0,Math.PI*2);x.stroke()}
  x.globalAlpha=1;x.font='44px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🎅',santa.x,santa.y);
- // 파란 산타 모자 오버레이
- x.fillStyle='#1976ff';x.beginPath();x.moveTo(santa.x-14,santa.y-20);x.lineTo(santa.x+5,santa.y-38);x.lineTo(santa.x+14,santa.y-18);x.closePath();x.fill();
+ // 빨간 산타 모자 오버레이
+ x.fillStyle='#d61f2c';x.beginPath();x.moveTo(santa.x-14,santa.y-20);x.lineTo(santa.x+5,santa.y-38);x.lineTo(santa.x+14,santa.y-18);x.closePath();x.fill();
  x.fillStyle='#ffffff';x.fillRect(santa.x-15,santa.y-20,30,5);circle(santa.x+6,santa.y-38,4,'#ffffff');
  x.restore();
  // enemies
- for(const e of enemies){circle(e.x,e.y,e.r,'#4b151c');x.font=(e.r*1.55)+'px sans-serif';x.fillText('👹',e.x,e.y)}
+ for(const e of enemies){
+   circle(e.x,e.y,e.r,e.boss?'#5d173f':'#4b151c');
+   x.font=(e.r*1.55)+'px sans-serif';
+   x.fillText(e.boss?'👹':'👹',e.x,e.y);
+   if(e.boss){
+     x.font='24px sans-serif';x.fillText('👑',e.x,e.y-e.r-15);
+     let bw=Math.min(140,e.r*2.8),bh=9,bx=e.x-bw/2,by=e.y-e.r-32;
+     x.fillStyle='rgba(0,0,0,.65)';x.fillRect(bx,by,bw,bh);
+     x.fillStyle='#ff3b59';x.fillRect(bx,by,bw*Math.max(0,e.hp/e.maxHp),bh);
+   }
+ }
  for(const b of bullets){
    if(b.kind==='rain'){x.fillStyle='#ffe55f';x.fillRect(b.x-2,b.y-9,4,18)}
    else {circle(b.x,b.y,b.r,b.kind==='kid'?'#63d7ff':b.kind==='elf'?'#67f0a3':'#ffd84f')}
