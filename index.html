@@ -307,7 +307,6 @@ function update(dt){
    }
  }
  mines=mines.filter(m=>m.life>0);
-
  let before=enemies.length;
  enemies=enemies.filter(e=>{if(e.hp<=0){kill++;burst(e.x,e.y,12);return false}return e.x>-80&&e.x<W+80&&e.y>-80&&e.y<H+80});
  for(const f of fx){f.life-=dt;if(!f.ring){f.x+=f.vx*dt;f.y+=f.vy*dt;f.vx*=.96;f.vy*=.96}}
@@ -332,7 +331,11 @@ function draw(){
  x.save();
  x.globalAlpha=1;
  if(shield>0){x.strokeStyle='rgba(120,220,255,.9)';x.lineWidth=5;x.beginPath();x.arc(santa.x,santa.y,santa.r+13,0,Math.PI*2);x.stroke()}
- x.globalAlpha=1;x.font='44px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🎅',santa.x,santa.y);x.restore();
+ x.globalAlpha=1;x.font='44px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🎅',santa.x,santa.y);
+ // 파란 산타 모자 오버레이
+ x.fillStyle='#1976ff';x.beginPath();x.moveTo(santa.x-14,santa.y-20);x.lineTo(santa.x+5,santa.y-38);x.lineTo(santa.x+14,santa.y-18);x.closePath();x.fill();
+ x.fillStyle='#ffffff';x.fillRect(santa.x-15,santa.y-20,30,5);circle(santa.x+6,santa.y-38,4,'#ffffff');
+ x.restore();
  // enemies
  for(const e of enemies){circle(e.x,e.y,e.r,'#4b151c');x.font=(e.r*1.55)+'px sans-serif';x.fillText('👹',e.x,e.y)}
  for(const b of bullets){
