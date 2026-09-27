@@ -2,6 +2,7 @@
   if (typeof update !== 'function' || typeof reset !== 'function' || typeof draw !== 'function') return;
 
   let selectingSkill = false;
+  window.__skillSelecting = false;
   let lastSkillChoiceWave = 1;
   let passiveClock = 0;
   let regenRate = 0;
@@ -49,14 +50,24 @@
   }
   function choices(){const pool=[...upgrades],out=[];while(out.length<3&&pool.length){const i=Math.floor(Math.random()*pool.length);out.push(pool.splice(i,1)[0])}return out}
   function showSelect(){
-    if(selectingSkill||!running)return;selectingSkill=true;
+    if(selectingSkill||!running)return;
+    selectingSkill=true;
+    window.__skillSelecting=true;
     const sub=document.querySelector('.skillSelectSub');
     if(sub) sub.textContent=`이번 판에서만 유지 · 현재 ${skillChoiceInterval(wave)}웨이브마다 선택 (30웨이브마다 간격 +2)`;
     const root=document.getElementById('skillCards');root.innerHTML='';
     choices().forEach(u=>{
       const btn=document.createElement('button');btn.className='skillCard';
       btn.innerHTML=`<div class="skillCardHead">${u.type}</div><div class="skillCardIcon">${u.icon}</div><div class="skillCardName">${u.name}</div><div class="skillCardDesc">${u.desc}</div><div class="skillType">${u.type}</div><div class="skillOwned">보유 Lv.${count(u.id)}</div>`;
-      btn.onclick=()=>{runSkills[u.id]=count(u.id)+1;u.apply();selectingSkill=false;document.getElementById('skillSelect').style.display='none';renderBar();if(typeof showToast==='function')showToast(`${u.icon} ${u.name} Lv.${count(u.id)}`)};
+      btn.onclick=()=>{
+        runSkills[u.id]=count(u.id)+1;
+        u.apply();
+        selectingSkill=false;
+        window.__skillSelecting=false;
+        document.getElementById('skillSelect').style.display='none';
+        renderBar();
+        if(typeof showToast==='function')showToast(`${u.icon} ${u.name} Lv.${count(u.id)}`)
+      };
       root.appendChild(btn);
     });
     document.getElementById('skillSelect').style.display='flex';
@@ -67,7 +78,7 @@
 
   const oldReset=reset;
   reset=function(){
-    oldReset();selectingSkill=false;lastSkillChoiceWave=1;passiveClock=0;regenRate=0;giftPowerMult=1;runSkills={};
+    oldReset();selectingSkill=false;window.__skillSelecting=false;lastSkillChoiceWave=1;passiveClock=0;regenRate=0;giftPowerMult=1;runSkills={};
     const sel=document.getElementById('skillSelect');if(sel)sel.style.display='none';renderBar();
   };
 
