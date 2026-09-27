@@ -11,7 +11,13 @@ export default {
       html = html.replace('</head>', '<link rel="stylesheet" href="/upgrade.css?v=1"></head>');
     }
     if (!html.includes('/upgrade.js')) {
-      html = html.replace('</body>', '<script src="/upgrade.js?v=1"></script></body>');
+      html = html.replace('</body>', '<script src="/upgrade.js?v=2"></script></body>');
+    }
+    if (!html.includes('/fusion.css')) {
+      html = html.replace('</head>', '<link rel="stylesheet" href="/fusion.css?v=1"></head>');
+    }
+    if (!html.includes('/fusion.js')) {
+      html = html.replace('</body>', '<script src="/fusion.js?v=1"></script></body>');
     }
     const headers = new Headers(response.headers);
     headers.set('content-type', 'text/html; charset=UTF-8');
