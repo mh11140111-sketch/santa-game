@@ -42,10 +42,12 @@
   };
 
   function shootEnemy(e,speed=210,damage=e.damage,color='#ff6a6a',r=6){
+    if(window.__skillSelecting) return;
     const a=Math.atan2(santa.y-e.y,santa.x-e.x);
     enemyShots.push({x:e.x,y:e.y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,damage,color,r,life:5});
   }
   function mutantExplosion(e){
+    if(window.__skillSelecting) return;
     if(typeof ringFx==='function') ringFx(e.x,e.y,'#ff814a',.75);
     if(typeof burst==='function') burst(e.x,e.y,34,'#ff814a');
     const d=Math.hypot(santa.x-e.x,santa.y-e.y);
@@ -56,7 +58,7 @@
   const oldUpdate=update;
   update=function(dt){
     oldUpdate(dt);
-    if(!running) return;
+    if(!running || window.__skillSelecting) return;
     mutantClock+=dt;
     const tier=mutantTier();
     if(tier>mutationNoticeTier){
@@ -69,7 +71,6 @@
       const d=Math.hypot(santa.x-e.x,santa.y-e.y);
       e.lastMutant=(e.lastMutant||0)+dt;
       if(e.mutantType==='ranged'){
-        // 원거리 적은 적정 거리를 유지하며 얼음탄 발사
         if(d>270){const a=Math.atan2(santa.y-e.y,santa.x-e.x);e.x+=Math.cos(a)*42*dt;e.y+=Math.sin(a)*42*dt;}
         else if(d<180){const a=Math.atan2(e.y-santa.y,e.x-santa.x);e.x+=Math.cos(a)*55*dt;e.y+=Math.sin(a)*55*dt;}
         if(e.lastMutant>1.8){e.lastMutant=0;shootEnemy(e,225,e.damage,'#72d9ff',6);}
@@ -99,7 +100,6 @@
     x.save();
     for(const e of enemies){
       if(!e.mutant) continue;
-      // 기존 👹 표시를 덮고 변이 이모티콘 표시
       circle(e.x,e.y,e.r+4,e.mutantType==='ranged'?'#183f59':e.mutantType==='bomber'?'#5a2917':'#3b1857');
       x.font=(e.r*1.7)+'px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillStyle='#fff';x.fillText(e.emoji,e.x,e.y);
       x.font='11px sans-serif';x.fillStyle='#fff';x.fillText('변이',e.x,e.y-e.r-9);
@@ -110,12 +110,10 @@
     x.restore();
   };
 
-  // 기존 10종에 새로운 선물상자 스킬 4종을 추가한다.
   const baseGift=useGift;
   useGift=function(){
     const cd=cooldownBase*cooldownMult;
-    if(!running||t-lastGift<cd)return;
-    // 약 29% 확률로 신규 스킬, 나머지는 기존 선물 스킬 사용
+    if(!running||window.__skillSelecting||t-lastGift<cd)return;
     if(Math.random()>=.29){baseGift();return;}
     lastGift=t;
     const r=Math.floor(Math.random()*4);
