@@ -1,0 +1,76 @@
+/* Mobile layout hardening for SANTA: INFINITE NIGHT */
+@media (max-width: 700px){
+  html,body,#wrap{width:100%;max-width:100%;height:100%;min-height:100%;overflow:hidden}
+  #lobby{overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(132px + env(safe-area-inset-bottom))}
+  #lobbyInner{height:auto;min-height:100%;padding:calc(6px + env(safe-area-inset-top)) 8px calc(132px + env(safe-area-inset-bottom))}
+  .simpleHeader{padding:2px 0 0}
+  .gameLogo{font-size:16px;white-space:nowrap}
+  .statsRow{gap:6px;margin:2px 0}
+  .statBadge{font-size:14px;padding:4px 9px;border-radius:10px;gap:6px}
+  .statBadge small{font-size:9px}
+  #arenaMenu{grid-template-columns:54px minmax(0,1fr) 54px;gap:4px;align-items:center;padding:0;min-height:330px}
+  .slots{gap:6px}
+  .slotCard{width:50px;height:68px;border-width:2px;border-radius:12px;padding:3px;box-shadow:0 3px 0 rgba(0,0,0,.18)}
+  .slotIcon{width:16px;height:16px;top:3px;left:3px;font-size:9px}
+  .slotItem{font-size:22px}
+  .slotGrade{left:4px;bottom:2px;font-size:15px;-webkit-text-stroke:.5px #000}
+  .slotLvl{top:2px;right:2px;font-size:7px;padding:0 3px}
+  .slotBonus{right:3px;bottom:3px;font-size:7px;max-width:42px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .centerStage{min-height:300px;min-width:0}
+  .stageCircle{width:min(62vw,240px);height:min(30vw,115px);bottom:40px}
+  #heroCanvas{width:min(58vw,220px);height:min(48vw,190px);max-width:100%}
+  #startBattle{bottom:8px;font-size:15px;padding:10px 17px;white-space:nowrap}
+  .simpleNav{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:4px auto 0}
+  .navBtn{min-width:0;padding:7px 2px;border-radius:12px;font-size:10px}
+  .navBtn span:first-child{font-size:21px}
+
+  /* Floating lobby buttons: keep clear of each other and safe areas */
+  #weaponLobbyBtn,#petLobbyBtn{position:fixed!important;bottom:calc(74px + env(safe-area-inset-bottom))!important;z-index:30!important;font-size:11px!important;padding:8px 10px!important;max-width:43vw;white-space:nowrap}
+  #weaponLobbyBtn{left:8px!important;right:auto!important}
+  #petLobbyBtn{right:8px!important;left:auto!important}
+  #coinHud{position:fixed!important;top:calc(6px + env(safe-area-inset-top))!important;right:6px!important;z-index:40!important;font-size:11px!important;padding:5px 8px!important}
+
+  /* Battle HUD and controls stay inside phone viewport */
+  #hud{left:calc(5px + env(safe-area-inset-left));right:calc(5px + env(safe-area-inset-right));top:calc(5px + env(safe-area-inset-top));gap:4px}
+  #stats{min-width:145px;max-width:52vw;padding:6px 7px}
+  .bar,#bossWrap{width:min(140px,43vw)}
+  #score{font-size:13px}
+  #title{font-size:8px}
+  #event{font-size:10px;max-width:40vw;padding:6px 7px;overflow-wrap:anywhere}
+  #controls{height:calc(150px + env(safe-area-inset-bottom))}
+  #joy{left:calc(10px + env(safe-area-inset-left));bottom:calc(12px + env(safe-area-inset-bottom));width:104px;height:104px}
+  #nub{left:32px;top:32px;width:40px;height:40px}
+  #gift{right:calc(12px + env(safe-area-inset-right));bottom:calc(20px + env(safe-area-inset-bottom));width:88px;height:88px;font-size:32px}
+  #cool{right:calc(8px + env(safe-area-inset-right));bottom:calc(4px + env(safe-area-inset-bottom));width:96px;font-size:10px}
+  .weaponHud{right:6px!important;top:calc(72px + env(safe-area-inset-top))!important;max-width:45vw;font-size:10px!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* All modals fit small screens and scroll internally */
+  .modal,#petModal,#weaponModal,#skillSelect{padding:8px!important;align-items:center!important;justify-content:center!important;overflow:hidden!important}
+  .modalPanel,#petPanel,#weaponPanel,.skillSelectPanel{width:calc(100vw - 16px)!important;max-width:calc(100vw - 16px)!important;max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom))!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;border-radius:16px!important;padding:12px!important}
+  .petGrid,.weaponGrid,.skillCards{grid-template-columns:1fr 1fr!important;gap:6px!important}
+  .petCard,.weaponCard,.skillCard{min-width:0!important;padding:8px!important}
+  .petDesc,.weaponDesc,.skillCardDesc{font-size:10px!important;line-height:1.25!important}
+  .petName,.weaponName,.skillCardName{font-size:12px!important}
+  .petEmoji,.weaponEmoji,.skillCardIcon{font-size:25px!important}
+  .skillSelectTitle{font-size:20px!important}
+  .skillSelectSub{font-size:11px!important}
+  #runSkillBar{max-width:calc(100vw - 110px)!important;overflow:hidden!important}
+}
+
+@media (max-width: 390px){
+  #arenaMenu{grid-template-columns:48px minmax(0,1fr) 48px;min-height:300px}
+  .slotCard{width:45px;height:62px}
+  .slotItem{font-size:19px}
+  .centerStage{min-height:270px}
+  #heroCanvas{width:min(55vw,190px);height:min(44vw,165px)}
+  #startBattle{font-size:14px;padding:9px 14px}
+  #weaponLobbyBtn,#petLobbyBtn{font-size:10px!important;padding:7px 8px!important}
+}
+
+@media (max-height: 700px) and (max-width: 700px){
+  #arenaMenu{min-height:255px}
+  .centerStage{min-height:245px}
+  .slotCard{height:58px}
+  #heroCanvas{height:150px}
+  .simpleNav{margin-top:0}
+}
