@@ -22,6 +22,13 @@
   ];
 
   function count(id){return runSkills[id]||0}
+  function skillChoiceInterval(w){return 2 + Math.floor(Math.max(0,w-1)/30)*2}
+  function isSkillChoiceWave(w){
+    const blockStart=Math.floor(Math.max(0,w-1)/30)*30;
+    const interval=skillChoiceInterval(w);
+    const local=w-blockStart;
+    return local>=interval && local%interval===0;
+  }
   function addUI(){
     if(document.getElementById('skillSelect')) return;
     const select=document.createElement('div');
@@ -43,6 +50,8 @@
   function choices(){const pool=[...upgrades],out=[];while(out.length<3&&pool.length){const i=Math.floor(Math.random()*pool.length);out.push(pool.splice(i,1)[0])}return out}
   function showSelect(){
     if(selectingSkill||!running)return;selectingSkill=true;
+    const sub=document.querySelector('.skillSelectSub');
+    if(sub) sub.textContent=`이번 판에서만 유지 · 현재 ${skillChoiceInterval(wave)}웨이브마다 선택 (30웨이브마다 간격 +2)`;
     const root=document.getElementById('skillCards');root.innerHTML='';
     choices().forEach(u=>{
       const btn=document.createElement('button');btn.className='skillCard';
@@ -78,7 +87,7 @@
     oldUpdate(dt);
     if(!running)return;
     passive(dt);
-    if(wave>=2 && wave%2===0 && wave!==lastSkillChoiceWave){lastSkillChoiceWave=wave;showSelect()}
+    if(isSkillChoiceWave(wave) && wave!==lastSkillChoiceWave){lastSkillChoiceWave=wave;showSelect()}
   };
 
   const oldDraw=draw;
