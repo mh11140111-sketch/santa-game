@@ -1,0 +1,40 @@
+name: Fix skill effects once
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-skill-effects.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore visible skill effects
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old="function burst(px,py,n=14){for(let i=0;i<n;i++){let a=Math.random()*Math.PI*2,s=rand(40,180);fx.push({x:px,y:py,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rand(.3,.8)})}}function giftDmg(m){return Math.round((attackPower+wave*.4)*m)}function useGift(){"
+          new="function burst(px,py,n=14,color='#ffcf4c'){for(let i=0;i<n;i++){let a=Math.random()*Math.PI*2,sp=rand(40,180);fx.push({x:px,y:py,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:rand(.3,.8),max:1,color})}}function ringFx(px,py,color='#ffdf61',life=.65){fx.push({ring:true,x:px,y:py,life,max:life,color})}function giftDmg(m){return Math.round((attackPower+wave*.4)*m)}function useGift(){"
+          if old in s: s=s.replace(old,new,1)
+          old2="if(r===0&&tg){tg.hp-=giftDmg(4)}else if(r===1){kids.push({x:santa.x,y:santa.y,life:14,last:0,type:'kid'})}else if(r===2){for(let i=0;i<30;i++)bullets.push({x:rand(0,W),y:-20-rand(0,180),vx:0,vy:rand(420,620),r:4,dmg:giftDmg(1.6),life:2.5,kind:'rain'})}else if(r===3){for(const e of enemies)if(dist(santa,e)<125)e.hp-=giftDmg(5)}else if(r===4){for(const e of enemies){e.hp-=giftDmg(2);e.spd*=.5}}else if(r===5){for(const e of enemies)if(dist(santa,e)<220)e.hp-=giftDmg(2.5)}else if(r===6){for(const e of enemies)e.hp-=giftDmg(6)}else if(r===7){shield=8}else if(r===8){for(let i=0;i<6;i++)mines.push({x:santa.x+rand(-140,140),y:santa.y+rand(-140,140),r:13,life:12})}else{kids.push({x:santa.x,y:santa.y,life:16,last:0,type:'elf'})}"
+          new2="if(r===0&&tg){document.getElementById('event').textContent='💥 폭발 선물!';tg.hp-=giftDmg(4);ringFx(tg.x,tg.y,'#ffd661');burst(tg.x,tg.y,28,'#ffd661')}else if(r===1){document.getElementById('event').textContent='🧒 아이 소환!';kids.push({x:santa.x,y:santa.y,life:14,last:0,type:'kid'});ringFx(santa.x,santa.y,'#55c7ff');burst(santa.x,santa.y,18,'#55c7ff')}else if(r===2){document.getElementById('event').textContent='🌧️ 총알비!';ringFx(santa.x,santa.y,'#ffe55f');for(let i=0;i<30;i++)bullets.push({x:rand(0,W),y:-20-rand(0,180),vx:0,vy:rand(420,620),r:4,dmg:giftDmg(1.6),life:2.5,kind:'rain'})}else if(r===3){document.getElementById('event').textContent='👊 근접 난타!';ringFx(santa.x,santa.y,'#fff58f');burst(santa.x,santa.y,24,'#fff58f');for(const e of enemies)if(dist(santa,e)<125)e.hp-=giftDmg(5)}else if(r===4){document.getElementById('event').textContent='❄️ 눈보라!';ringFx(santa.x,santa.y,'#b7efff',1);for(let i=0;i<55;i++)fx.push({x:rand(0,W),y:rand(0,H),vx:rand(-30,30),vy:rand(20,80),life:rand(.5,1.2),max:1,color:'#dff7ff'});for(const e of enemies){e.hp-=giftDmg(2);e.spd*=.5}}else if(r===5){document.getElementById('event').textContent='🦌 순록 돌진!';let a=tg?Math.atan2(tg.y-santa.y,tg.x-santa.x):-Math.PI/2;for(let d=40;d<360;d+=45){let px=santa.x+Math.cos(a)*d,py=santa.y+Math.sin(a)*d;ringFx(px,py,'#ffdd8a',.35)}for(const e of enemies)if(dist(santa,e)<220)e.hp-=giftDmg(2.5)}else if(r===6){document.getElementById('event').textContent='🎁💣 거대 선물폭탄!';ringFx(W/2,H*.45,'#ff89d8',1);burst(W/2,H*.45,60,'#ff76bf');for(const e of enemies)e.hp-=giftDmg(6)}else if(r===7){document.getElementById('event').textContent='🛡️ 보호막!';shield=8;ringFx(santa.x,santa.y,'#79ecff',.8)}else if(r===8){document.getElementById('event').textContent='🍬 사탕 지뢰!';ringFx(santa.x,santa.y,'#ff9ce4');for(let i=0;i<6;i++)mines.push({x:santa.x+rand(-140,140),y:santa.y+rand(-140,140),r:13,life:12})}else{document.getElementById('event').textContent='🧝 엘프 지원!';kids.push({x:santa.x,y:santa.y,life:16,last:0,type:'elf'});ringFx(santa.x,santa.y,'#67f0a3');burst(santa.x,santa.y,18,'#67f0a3')}"
+          if old2 in s: s=s.replace(old2,new2,1)
+          old3="for(const b of bullets){circle(b.x,b.y,b.r,b.kind==='rain'?'#ffe55f':'#ffd84f')}for(const m of mines){x.font='18px sans-serif';x.fillText('🍬',m.x,m.y)}}"
+          new3="for(const k of kids){circle(k.x,k.y,15,k.type==='elf'?'#57e389':'#55c7ff');x.font='20px sans-serif';x.fillText(k.type==='elf'?'🧝':'🧒',k.x,k.y)}for(const b of bullets){if(b.kind==='rain'){x.fillStyle='#ffe55f';x.fillRect(b.x-2,b.y-9,4,18)}else circle(b.x,b.y,b.r,b.kind==='elf'?'#67f0a3':b.kind==='kid'?'#63d7ff':'#ffd84f')}for(const m of mines){circle(m.x,m.y,m.r,'#d83b5c');x.font='18px sans-serif';x.fillText('🍬',m.x,m.y)}for(const f of fx){let a=Math.max(0,f.life/(f.max||1));x.globalAlpha=Math.min(1,a);if(f.ring){x.strokeStyle=f.color||'#ffdf61';x.lineWidth=9;x.shadowColor=f.color||'#ffdf61';x.shadowBlur=16;x.beginPath();x.arc(f.x,f.y,(1-a)*165+18,0,Math.PI*2);x.stroke();x.shadowBlur=0}else circle(f.x,f.y,4,f.color||'#ffcf4c')}x.globalAlpha=1;if(shield>0){x.strokeStyle='rgba(120,220,255,.95)';x.lineWidth=5;x.beginPath();x.arc(santa.x,santa.y,santa.r+15,0,Math.PI*2);x.stroke()}}"
+          if old3 in s: s=s.replace(old3,new3,1)
+          old4="mines=mines.filter(m=>m.life>0);for(const d of lootDrops)"
+          new4="mines=mines.filter(m=>m.life>0);for(const f of fx){f.life-=dt;if(!f.ring){f.x+=f.vx*dt;f.y+=f.vy*dt;f.vx*=.96;f.vy*=.96}}fx=fx.filter(f=>f.life>0);for(const d of lootDrops)"
+          if old4 in s and "fx=fx.filter" not in s[s.find('function update'):s.find('function draw')]: s=s.replace(old4,new4,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "santa-game-bot"
+          git config user.email "santa-game-bot@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "Fix visible skill effects"
+          git push
