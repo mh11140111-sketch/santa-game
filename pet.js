@@ -20,6 +20,7 @@
 
   function load(){try{const v=JSON.parse(localStorage.getItem(PET_KEY)||'null');if(v)return {coins:v.coins||0,pets:v.pets||{},equipped:v.equipped||null}}catch(e){}return{coins:0,pets:{},equipped:null}}
   function save(){localStorage.setItem(PET_KEY,JSON.stringify(data));renderPetUI();}
+  window.SantaCoinBank={get:()=>data.coins,spend(n){if(data.coins<n)return false;data.coins-=n;save();return true},add(n){data.coins+=n;save();return data.coins},refresh(){renderPetUI()}};
   function ownedCount(id){return data.pets[id]||0}
   function weightedPet(){let total=0;for(const p of petDefs) total+=gradeWeight[p.grade];let r=Math.random()*total;for(const p of petDefs){r-=gradeWeight[p.grade];if(r<=0)return p}return petDefs[0]}
   function equippedPet(){return petDefs.find(p=>p.id===data.equipped)||null}
