@@ -19,6 +19,9 @@ export default {
     if (!html.includes('/fusion.js')) {
       html = html.replace('</body>', '<script src="/fusion.js?v=1"></script></body>');
     }
+    if (!html.includes('/mutation.js')) {
+      html = html.replace('</body>', '<script src="/mutation.js?v=1"></script></body>');
+    }
     const headers = new Headers(response.headers);
     headers.set('content-type', 'text/html; charset=UTF-8');
     headers.set('cache-control', 'no-cache');
