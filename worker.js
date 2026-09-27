@@ -22,6 +22,9 @@ export default {
     if (!html.includes('/mutation.js')) {
       html = html.replace('</body>', '<script src="/mutation.js?v=1"></script></body>');
     }
+    if (!html.includes('/death.js')) {
+      html = html.replace('</body>', '<script src="/death.js?v=1"></script></body>');
+    }
     const headers = new Headers(response.headers);
     headers.set('content-type', 'text/html; charset=UTF-8');
     headers.set('cache-control', 'no-cache');
