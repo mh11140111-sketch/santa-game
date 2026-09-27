@@ -37,6 +37,9 @@ export default {
     if (!html.includes('/weapon.js')) {
       html = html.replace('</body>', '<script src="/weapon.js?v=1"></script></body>');
     }
+    if (!html.includes('/mobile-fix.css')) {
+      html = html.replace('</head>', '<link rel="stylesheet" href="/mobile-fix.css?v=1"></head>');
+    }
     const headers = new Headers(response.headers);
     headers.set('content-type', 'text/html; charset=UTF-8');
     headers.set('cache-control', 'no-cache');
