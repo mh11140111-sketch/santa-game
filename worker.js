@@ -7,8 +7,15 @@ export default {
     if (!html.includes('/effects.js')) {
       html = html.replace('</body>', '<script src="/effects.js?v=3"></script></body>');
     }
+    if (!html.includes('/upgrade.css')) {
+      html = html.replace('</head>', '<link rel="stylesheet" href="/upgrade.css?v=1"></head>');
+    }
+    if (!html.includes('/upgrade.js')) {
+      html = html.replace('</body>', '<script src="/upgrade.js?v=1"></script></body>');
+    }
     const headers = new Headers(response.headers);
     headers.set('content-type', 'text/html; charset=UTF-8');
+    headers.set('cache-control', 'no-cache');
     return new Response(html, {status: response.status, statusText: response.statusText, headers});
   }
 };
