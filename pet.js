@@ -18,19 +18,38 @@
   let petShotClock=0;
   let petRegenClock=0;
 
-  function load(){try{const v=JSON.parse(localStorage.getItem(PET_KEY)||'null');if(v)return {coins:v.coins||0,pets:v.pets||{},equipped:v.equipped||null}}catch(e){}return{coins:0,pets:{},equipped:null}}
+  function load(){
+    try{
+      const v=JSON.parse(localStorage.getItem(PET_KEY)||'null');
+      if(v)return {coins:v.coins||0,pets:v.pets||{},equipped:v.equipped||null,fusion:v.fusion||{}};
+    }catch(e){}
+    return{coins:0,pets:{},equipped:null,fusion:{}};
+  }
   function save(){localStorage.setItem(PET_KEY,JSON.stringify(data));renderPetUI();}
   window.SantaCoinBank={get:()=>data.coins,spend(n){if(data.coins<n)return false;data.coins-=n;save();return true},add(n){data.coins+=n;save();return data.coins},refresh(){renderPetUI()}};
   function ownedCount(id){return data.pets[id]||0}
+  function fusionLv(id){return data.fusion[id]||0}
+  function fusionPower(id){return Math.pow(1.15,fusionLv(id))}
+  function fusionRate(id){return Math.pow(.92,fusionLv(id))}
   function weightedPet(){let total=0;for(const p of petDefs) total+=gradeWeight[p.grade];let r=Math.random()*total;for(const p of petDefs){r-=gradeWeight[p.grade];if(r<=0)return p}return petDefs[0]}
   function equippedPet(){return petDefs.find(p=>p.id===data.equipped)||null}
+  function effectiveDesc(p){
+    const lv=fusionLv(p.id),m=fusionPower(p.id),r=fusionRate(p.id);
+    if(!lv)return p.desc;
+    if(p.type==='attack')return `${p.desc} · 합성 +${lv}: 피해 ${Math.round((m-1)*100)}%↑ / 공속 ${Math.round((1-r)*100)}%↑`;
+    if(p.type==='atkBuff')return `산타 공격력 +${Math.round(p.value*m*100)}%`;
+    if(p.type==='hpBuff')return `최대 체력 +${Math.round(p.value*m*100)}%`;
+    if(p.type==='regen')return `5초마다 최대 체력의 ${Math.round(p.value*m*100)}% 회복`;
+    if(p.type==='allBuff')return `공격력/체력 +${Math.round(p.value*m*100)}% · 선물 쿨타임 ${Math.round(8*m)}% 감소`;
+    return p.desc;
+  }
 
   function addUI(){
     if(document.getElementById('petLobbyBtn'))return;
     const btn=document.createElement('button');btn.id='petLobbyBtn';btn.textContent='🐾 펫 뽑기';document.getElementById('lobby').appendChild(btn);
     const coin=document.createElement('div');coin.id='coinHud';coin.textContent='🪙 0';document.getElementById('wrap').appendChild(coin);
     const modal=document.createElement('div');modal.id='petModal';
-    modal.innerHTML=`<div id="petPanel"><div class="petTop"><h2>🐾 펫 뽑기</h2><button class="petClose">닫기</button></div><div style="font-size:13px;color:#cbd8eb;margin-top:4px">1회 500코인 · 펫은 영구 보유 · 한 마리 장착</div><button class="petDraw">🪙 500코인으로 1회 뽑기</button><div id="petResult">펫을 뽑아봐!</div><div class="petGrid" id="petGrid"></div></div>`;
+    modal.innerHTML=`<div id="petPanel"><div class="petTop"><h2>🐾 펫 뽑기 / 합성</h2><button class="petClose">닫기</button></div><div style="font-size:13px;color:#cbd8eb;margin-top:4px">1회 500코인 · 같은 펫 3개 합성 시 영구 강화 · 한 마리 장착</div><button class="petDraw">🪙 500코인으로 1회 뽑기</button><div id="petResult">펫을 뽑거나 같은 펫 3개를 합성해봐!</div><div class="petGrid" id="petGrid"></div></div>`;
     document.getElementById('wrap').appendChild(modal);
     btn.onclick=()=>{modal.style.display='flex';renderPetUI()};
     modal.querySelector('.petClose').onclick=()=>modal.style.display='none';
@@ -41,13 +60,32 @@
     data.coins-=500;
     const p=weightedPet();data.pets[p.id]=(data.pets[p.id]||0)+1;
     if(!data.equipped)data.equipped=p.id;
-    document.getElementById('petResult').innerHTML=`${p.emoji} <b>${p.grade}등급 ${p.name}</b> 획득!<br><small>${p.desc}</small>`;
+    document.getElementById('petResult').innerHTML=`${p.emoji} <b>${p.grade}등급 ${p.name}</b> 획득!<br><small>${effectiveDesc(p)}</small>`;
     save();
+  }
+  function fusePet(id){
+    const p=petDefs.find(q=>q.id===id);if(!p)return;
+    const n=ownedCount(id);
+    if(n<3){document.getElementById('petResult').textContent='같은 펫이 3개 필요해.';return}
+    data.pets[id]=n-2;
+    data.fusion[id]=fusionLv(id)+1;
+    if(!data.equipped)data.equipped=id;
+    save();
+    document.getElementById('petResult').innerHTML=`✨ ${p.emoji} <b>${p.name} 합성 +${fusionLv(id)}</b><br><small>${effectiveDesc(p)}</small>`;
+    if(typeof showToast==='function')showToast(`✨ ${p.name} 합성 +${fusionLv(id)}`);
   }
   function renderPetUI(){
     const coin=document.getElementById('coinHud');if(coin)coin.textContent=`🪙 ${data.coins}`;
     const grid=document.getElementById('petGrid');if(!grid)return;grid.innerHTML='';
-    for(const p of petDefs){const n=ownedCount(p.id);const card=document.createElement('button');card.className='petCard'+(data.equipped===p.id?' equipped':'');card.disabled=!n;card.innerHTML=`<div class="petEmoji">${p.emoji}</div><div class="petName">${p.name}</div><div class="petDesc">${p.desc}</div><div class="petGrade">${p.grade} · 보유 ${n}</div>`;card.onclick=()=>{if(n){data.equipped=p.id;save();if(typeof showToast==='function')showToast(`${p.emoji} ${p.name} 장착`)}};grid.appendChild(card)}
+    for(const p of petDefs){
+      const n=ownedCount(p.id),lv=fusionLv(p.id);
+      const card=document.createElement('div');card.className='petCard'+(data.equipped===p.id?' equipped':'');
+      card.innerHTML=`<div class="petEmoji">${p.emoji}</div><div class="petName">${p.name}${lv?` · 합성 +${lv}`:''}</div><div class="petDesc">${effectiveDesc(p)}</div><div class="petGrade">${p.grade} · 보유 ${n}${data.equipped===p.id?' · 장착중':''}</div><div style="display:flex;gap:6px;margin-top:8px"><button class="petEquipBtn" ${!n?'disabled':''}>장착</button><button class="petFuseBtn" ${n<3?'disabled':''}>합성 3개</button></div>`;
+      const eq=card.querySelector('.petEquipBtn'),fu=card.querySelector('.petFuseBtn');
+      eq.onclick=()=>{if(n){data.equipped=p.id;save();if(typeof showToast==='function')showToast(`${p.emoji} ${p.name} 장착`)}};
+      fu.onclick=()=>fusePet(p.id);
+      grid.appendChild(card);
+    }
   }
   function dropCoin(x,y,isBoss){
     const chance=isBoss?.82:.2;if(Math.random()>chance)return;
@@ -56,7 +94,12 @@
   }
 
   const oldSetup=typeof setupRun==='function'?setupRun:null;
-  if(oldSetup){setupRun=function(){oldSetup();const p=equippedPet();if(!p)return;if(p.type==='atkBuff')attackPower*=1+p.value;else if(p.type==='hpBuff'){maxHp*=1+p.value;hp=maxHp}else if(p.type==='allBuff'){attackPower*=1+p.value;maxHp*=1+p.value;hp=maxHp;cooldownMult*=.92}}}
+  if(oldSetup){setupRun=function(){
+    oldSetup();const p=equippedPet();if(!p)return;const m=fusionPower(p.id);
+    if(p.type==='atkBuff')attackPower*=1+p.value*m;
+    else if(p.type==='hpBuff'){maxHp*=1+p.value*m;hp=maxHp}
+    else if(p.type==='allBuff'){attackPower*=1+p.value*m;maxHp*=1+p.value*m;hp=maxHp;cooldownMult*=Math.max(.55,1-.08*m)}
+  }}
 
   const oldReset=typeof reset==='function'?reset:null;
   if(oldReset){reset=function(){oldReset();coinDrops=[];petClock=0;petShotClock=0;petRegenClock=0}}
@@ -72,8 +115,9 @@
     for(const d of coinDrops){d.life-=dt;const dd=Math.hypot(santa.x-d.x,santa.y-d.y);if(dd<150){const a=Math.atan2(santa.y-d.y,santa.x-d.x);d.x+=Math.cos(a)*220*dt;d.y+=Math.sin(a)*220*dt}if(dd<28){data.coins+=d.amount;d.life=0;save();if(typeof showToast==='function')showToast(`🪙 +${d.amount}`)}}
     coinDrops=coinDrops.filter(d=>d.life>0);
     const p=equippedPet();if(!p)return;
-    if(p.type==='attack'&&petShotClock>=p.rate){petShotClock=0;const tg=nearest(santa);if(tg){const a=petClock*2.6;const from={x:santa.x+Math.cos(a)*42,y:santa.y+Math.sin(a)*42};shoot(from,tg,Math.round(attackPower*p.power),540,'pet')}}
-    if(p.type==='regen'&&petRegenClock>=5){petRegenClock=0;hp=Math.min(maxHp,hp+maxHp*p.value)}
+    const m=fusionPower(p.id),r=fusionRate(p.id);
+    if(p.type==='attack'&&petShotClock>=p.rate*r){petShotClock=0;const tg=nearest(santa);if(tg){const a=petClock*2.6;const from={x:santa.x+Math.cos(a)*42,y:santa.y+Math.sin(a)*42};shoot(from,tg,Math.round(attackPower*p.power*m),540,'pet')}}
+    if(p.type==='regen'&&petRegenClock>=5){petRegenClock=0;hp=Math.min(maxHp,hp+maxHp*p.value*m)}
   };
 
   const oldDraw=draw;
@@ -81,7 +125,7 @@
     oldDraw();
     x.save();
     for(const d of coinDrops){x.font='22px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🪙',d.x,d.y);x.font='10px sans-serif';x.fillStyle='#ffe36a';x.fillText('+'+d.amount,d.x,d.y+16)}
-    const p=equippedPet();if(p&&running){const a=petClock*2.6,px=santa.x+Math.cos(a)*42,py=santa.y+Math.sin(a)*42;x.font='25px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(p.emoji,px,py)}
+    const p=equippedPet();if(p&&running){const a=petClock*2.6,px=santa.x+Math.cos(a)*42,py=santa.y+Math.sin(a)*42;x.font='25px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(p.emoji,px,py);const lv=fusionLv(p.id);if(lv){x.font='10px sans-serif';x.fillStyle='#ffe56d';x.fillText('+'+lv,px,py+18)}}
     x.restore();
   };
 
