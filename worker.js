@@ -29,7 +29,13 @@ export default {
       html = html.replace('</head>', '<link rel="stylesheet" href="/pet.css?v=1"></head>');
     }
     if (!html.includes('/pet.js')) {
-      html = html.replace('</body>', '<script src="/pet.js?v=1"></script></body>');
+      html = html.replace('</body>', '<script src="/pet.js?v=2"></script></body>');
+    }
+    if (!html.includes('/weapon.css')) {
+      html = html.replace('</head>', '<link rel="stylesheet" href="/weapon.css?v=1"></head>');
+    }
+    if (!html.includes('/weapon.js')) {
+      html = html.replace('</body>', '<script src="/weapon.js?v=1"></script></body>');
     }
     const headers = new Headers(response.headers);
     headers.set('content-type', 'text/html; charset=UTF-8');
